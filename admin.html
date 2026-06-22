@@ -397,6 +397,13 @@
         .btn-danger:hover {
             background: #c0392b;
         }
+        .btn-success {
+            background: #27ae60;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #219a52;
+        }
         .btn-sm {
             padding: 6px 12px;
             font-size: 0.72rem;
@@ -554,6 +561,10 @@
             border-color: var(--coral);
             box-shadow: 0 0 0 3px rgba(255, 107, 90, 0.08);
         }
+        .form-group input[type="file"] {
+            padding: 9px 14px;
+            cursor: pointer;
+        }
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -563,6 +574,31 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* ============ IMAGE PREVIEW ============ */
+        .image-preview-wrap {
+            width: 120px;
+            height: 150px;
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: var(--hover-bg);
+            flex-shrink: 0;
+        }
+        .image-preview-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .image-preview-wrap .no-image {
+            font-size: 2.5rem;
+            color: var(--stone);
+            opacity: 0.5;
         }
 
         /* ============ MODALS ============ */
@@ -591,7 +627,7 @@
             border-radius: var(--radius-xl);
             padding: 24px 20px;
             width: 90%;
-            max-width: 500px;
+            max-width: 550px;
             max-height: 85vh;
             overflow-y: auto;
             box-shadow: var(--shadow-lg);
@@ -635,6 +671,47 @@
             margin-bottom: 16px;
             text-align: center;
             color: var(--text);
+        }
+        .modal .import-info {
+            background: var(--hover-bg);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            border: 1px solid var(--border);
+        }
+        .modal .import-info code {
+            background: rgba(0, 0, 0, 0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            direction: ltr;
+            display: inline-block;
+        }
+        body.dark .modal .import-info code {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .import-result {
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            margin-top: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: none;
+        }
+        .import-result.success {
+            background: #27ae6022;
+            color: #27ae60;
+            border: 1px solid #27ae6044;
+            display: block;
+        }
+        .import-result.error {
+            background: #e74c3c22;
+            color: #e74c3c;
+            border: 1px solid #e74c3c44;
+            display: block;
         }
 
         /* ============ TOAST ============ */
@@ -735,6 +812,9 @@
             table td {
                 padding: 8px 10px;
             }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
         @media (min-width: 769px) {
             .sidebar {
@@ -756,22 +836,7 @@
             margin-bottom: 8px;
         }
 
-        /* ============ MISC ============ */
-        .badge-status {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 50px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-        .badge-success {
-            background: #27ae6022;
-            color: #27ae60;
-        }
-        .badge-warning {
-            background: #f39c1222;
-            color: #f39c12;
-        }
+        /* ============ WHATSAPP ROW ============ */
         .whatsapp-row {
             display: flex;
             align-items: center;
@@ -864,6 +929,7 @@
                 <div class="top-header">
                     <h1>📦 إدارة المنتجات</h1>
                     <div class="header-actions">
+                        <button class="btn btn-success" id="btnImportProductsJSON">📥 استيراد JSON</button>
                         <button class="btn btn-primary" id="btnAddProduct">➕ إضافة منتج</button>
                     </div>
                 </div>
@@ -968,8 +1034,39 @@
                 </select></div>
                 <div class="form-group"><label>التقييم (1-5)</label><input type="number" id="prodRating" placeholder="4.5" min="1" max="5" step="0.1" value="4.0"></div>
             </div>
-            <div class="form-group"><label>لون خلفية الصورة</label><input type="text" id="prodImageColor" placeholder="مثال: 1a1a1a"></div>
+            <div class="form-group"><label>لون خلفية الصورة (لـ Placehold)</label><input type="text" id="prodImageColor" placeholder="مثال: 1a1a1a"></div>
+            <div class="form-group">
+                <label>📷 صورة المنتج (اختياري - أقصى حجم 2MB)</label>
+                <input type="file" id="prodImageFile" accept="image/*" style="padding:9px 14px;">
+                <small style="color:var(--text-secondary);font-size:0.7rem;display:block;margin-top:4px;">يتم ضغط الصورة تلقائياً لتوفير المساحة</small>
+                <div class="image-preview-wrap" id="imagePreviewWrap">
+                    <span class="no-image">🖼️</span>
+                </div>
+            </div>
+            <input type="hidden" id="prodImageData" value="">
             <button class="btn btn-primary" style="width:100%;" id="btnSaveProduct">💾 حفظ المنتج</button>
+        </div>
+    </div>
+
+    <!-- ==================== IMPORT JSON MODAL ==================== -->
+    <div class="modal-overlay" id="importModalOverlay" style="display:none;">
+        <div class="modal" id="importModal">
+            <button class="modal-close" id="importModalClose">✕</button>
+            <h3>📥 استيراد منتجات من JSON</h3>
+            <div class="import-info">
+                <p>📋 <strong>الصيغة المطلوبة:</strong> ملف <code>.json</code> يحتوي على مصفوفة منتجات.</p>
+                <p style="margin-top:6px;">🔑 <strong>الحقول المطلوبة لكل منتج:</strong></p>
+                <p dir="ltr" style="margin-top:4px;"><code>"name"</code> و <code>"price"</code></p>
+                <p style="margin-top:6px;">📝 <strong>الحقول الاختيارية:</strong></p>
+                <p dir="ltr" style="margin-top:4px;"><code>"description"</code>, <code>"discount"</code>, <code>"category"</code>, <code>"rating"</code>, <code>"imageColor"</code>, <code>"imageData"</code></p>
+                <p style="margin-top:8px;color:var(--coral);">⚠️ سيتم إضافة المنتجات للمنتجات الحالية وليس استبدالها.</p>
+            </div>
+            <div class="form-group">
+                <label>اختر ملف JSON</label>
+                <input type="file" id="importProductsFile" accept=".json">
+            </div>
+            <div class="import-result" id="importResult"></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:10px;" id="btnDoImportProducts">📥 بدء الاستيراد</button>
         </div>
     </div>
 
@@ -1001,23 +1098,23 @@
             };
             const DEFAULT_PRODUCTS = [
                 { id: 'p1', name: 'تيشيرت أسود عصري', description: 'تيشيرت قطني أسود بتصميم شبابي', price: 12000,
-                    discount: 15, category: 'ملابس', rating: 4.5, imageColor: '1a1a1a' },
+                    discount: 15, category: 'ملابس', rating: 4.5, imageColor: '1a1a1a', imageData: '' },
                 { id: 'p2', name: 'قميص أبيض كلاسيك', description: 'قميص أبيض أنيق', price: 18000, discount: 0,
-                    category: 'ملابس', rating: 4.8, imageColor: 'd5d5cc' },
+                    category: 'ملابس', rating: 4.8, imageColor: 'd5d5cc', imageData: '' },
                 { id: 'p3', name: 'بنطلون جينز أزرق', description: 'جينز أزرق بقصة عصرية', price: 22000, discount: 10,
-                    category: 'ملابس', rating: 4.3, imageColor: '3b5998' },
+                    category: 'ملابس', rating: 4.3, imageColor: '3b5998', imageData: '' },
                 { id: 'p6', name: 'حذاء رياضي نايك', description: 'حذاء رياضي مريح', price: 28000, discount: 12,
-                    category: 'أحذية', rating: 4.4, imageColor: 'c0392b' },
+                    category: 'أحذية', rating: 4.4, imageColor: 'c0392b', imageData: '' },
                 { id: 'p7', name: 'حذاء كلاسيك بني', description: 'حذاء جلدي بني أنيق', price: 32000, discount: 0,
-                    category: 'أحذية', rating: 4.9, imageColor: '6d4c30' },
+                    category: 'أحذية', rating: 4.9, imageColor: '6d4c30', imageData: '' },
                 { id: 'p10', name: 'ساعة يد فاخرة', description: 'ساعة ستانلس ستيل', price: 45000, discount: 15,
-                    category: 'إكسسوارات', rating: 4.8, imageColor: 'b8942e' },
+                    category: 'إكسسوارات', rating: 4.8, imageColor: 'b8942e', imageData: '' },
                 { id: 'p11', name: 'نظارة شمسية', description: 'نظارة شمسية بعدسات مستقطبة', price: 11000, discount: 0,
-                    category: 'إكسسوارات', rating: 4.2, imageColor: '333333' },
+                    category: 'إكسسوارات', rating: 4.2, imageColor: '333333', imageData: '' },
                 { id: 'p14', name: 'عطر شرقي أصيل', description: 'عطر بتركيبة شرقية', price: 25000, discount: 10,
-                    category: 'عطور', rating: 4.7, imageColor: '71368a' },
+                    category: 'عطور', rating: 4.7, imageColor: '71368a', imageData: '' },
                 { id: 'p15', name: 'عطر فرنسي فاخر', description: 'عطر مستوحى من أرقى العطور', price: 38000, discount: 5,
-                    category: 'عطور', rating: 4.9, imageColor: '1e2d3d' },
+                    category: 'عطور', rating: 4.9, imageColor: '1e2d3d', imageData: '' },
             ];
 
             // ============ HELPERS ============
@@ -1043,7 +1140,48 @@
             }
 
             function generateId() {
-                return 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                return 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7);
+            }
+
+            // ============ IMAGE COMPRESSION ============
+            function compressImage(file, maxWidth = 400, maxHeight = 500, quality = 0.7) {
+                return new Promise((resolve, reject) => {
+                    if (!file || !file.type.startsWith('image/')) {
+                        reject(new Error('الملف ليس صورة'));
+                        return;
+                    }
+                    if (file.size > 2 * 1024 * 1024) {
+                        reject(new Error('حجم الصورة كبير جداً - الحد الأقصى 2MB'));
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            resolve(dataUrl);
+                        };
+                        img.onerror = function() { reject(new Error('فشل تحميل الصورة')); };
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = function() { reject(new Error('فشل قراءة الملف')); };
+                    reader.readAsDataURL(file);
+                });
             }
 
             // ============ STATE ============
@@ -1091,6 +1229,8 @@
             const whatsappList = document.getElementById('whatsappList');
             const productModalOverlay = document.getElementById('productModalOverlay');
             const whatsappModalOverlay = document.getElementById('whatsappModalOverlay');
+            const importModalOverlay = document.getElementById('importModalOverlay');
+            const imagePreviewWrap = document.getElementById('imagePreviewWrap');
 
             // ============ DARK MODE ============
             function applyDarkMode() {
@@ -1180,13 +1320,11 @@
                     pageSections.forEach(s => s.classList.remove('active'));
                     const target = document.getElementById('page-' + page);
                     if (target) target.classList.add('active');
-                    // Refresh relevant data
                     if (page === 'dashboard') renderStats();
                     if (page === 'products') renderProductsTable();
                     if (page === 'orders') renderOrdersTable();
                     if (page === 'whatsapp') renderWhatsappList();
                     if (page === 'appearance') loadAppearance();
-                    // Close sidebar on mobile
                     if (window.innerWidth <= 768) sidebar.classList.remove('open');
                 });
             });
@@ -1229,6 +1367,9 @@
 
             // ============ PRODUCTS ============
             function getProductImageUrl(p) {
+                if (p.imageData && p.imageData.startsWith('data:image')) {
+                    return p.imageData;
+                }
                 const bg = p.imageColor || '1a1a1a';
                 const name = encodeURIComponent(p.name.substring(0, 10));
                 return `https://placehold.co/400x500/${bg}/ffffff?text=${name}`;
@@ -1245,10 +1386,12 @@
                     document.querySelector('#page-products .table-wrap').style.display = 'block';
                     productsTableBody.innerHTML = data.map(p => {
                         const fp = Math.round(p.price * (1 - p.discount / 100));
+                        const imgUrl = getProductImageUrl(p);
+                        const hasImg = p.imageData && p.imageData.startsWith('data:image');
                         return `
                   <tr>
-                    <td><img src="${getProductImageUrl(p)}" alt="${p.name}" style="width:40px;height:50px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'"></td>
-                    <td><strong>${p.name}</strong></td>
+                    <td><img src="${imgUrl}" alt="${p.name}" style="width:40px;height:50px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'"></td>
+                    <td><strong>${p.name}</strong>${hasImg?' <small style=\'color:#27ae60;\'>📷</small>':''}</td>
                     <td>${p.category}</td>
                     <td>${fp.toLocaleString()} ج.س ${p.discount>0?`<span style='color:#e74c3c;font-size:0.7rem;'>(-${p.discount}%)</span>`:''}</td>
                     <td>${p.discount}%</td>
@@ -1262,7 +1405,6 @@
                   </tr>`;
                     }).join('');
 
-                    // Attach events
                     productsTableBody.querySelectorAll('.btn-edit').forEach(b => {
                         b.addEventListener('click', () => openProductModal(b.dataset.id));
                     });
@@ -1277,6 +1419,10 @@
                 const modal = document.getElementById('productModalOverlay');
                 const title = document.getElementById('productModalTitle');
                 document.getElementById('productEditId').value = editId || '';
+                document.getElementById('prodImageData').value = '';
+                document.getElementById('prodImageFile').value = '';
+                imagePreviewWrap.innerHTML = '<span class="no-image">🖼️</span>';
+
                 if (editId) {
                     title.textContent = '✏️ تعديل المنتج';
                     const p = products.find(pr => pr.id === editId);
@@ -1288,6 +1434,11 @@
                         document.getElementById('prodCategory').value = p.category;
                         document.getElementById('prodRating').value = p.rating;
                         document.getElementById('prodImageColor').value = p.imageColor || '';
+                        if (p.imageData && p.imageData.startsWith('data:image')) {
+                            document.getElementById('prodImageData').value = p.imageData;
+                            imagePreviewWrap.innerHTML =
+                                `<img src="${p.imageData}" alt="معاينة" style="width:100%;height:100%;object-fit:cover;">`;
+                        }
                     }
                 } else {
                     title.textContent = '➕ إضافة منتج جديد';
@@ -1306,6 +1457,25 @@
                 productModalOverlay.style.display = 'none';
             }
 
+            // Image file input change
+            document.getElementById('prodImageFile').addEventListener('change', async function() {
+                const file = this.files[0];
+                if (!file) return;
+                try {
+                    imagePreviewWrap.innerHTML = '<span class="no-image" style="font-size:1rem;">⏳ جاري ضغط الصورة...</span>';
+                    const compressed = await compressImage(file, 400, 500, 0.7);
+                    document.getElementById('prodImageData').value = compressed;
+                    imagePreviewWrap.innerHTML =
+                        `<img src="${compressed}" alt="معاينة" style="width:100%;height:100%;object-fit:cover;">`;
+                    showToast('✅ تم رفع الصورة وضغطها');
+                } catch (err) {
+                    imagePreviewWrap.innerHTML = '<span class="no-image">🖼️</span>';
+                    document.getElementById('prodImageData').value = '';
+                    this.value = '';
+                    showToast('⚠️ ' + err.message);
+                }
+            });
+
             document.getElementById('productModalClose').addEventListener('click', closeProductModal);
             productModalOverlay.addEventListener('click', function(e) {
                 if (e.target === this) closeProductModal();
@@ -1320,6 +1490,7 @@
                 const category = document.getElementById('prodCategory').value;
                 const rating = parseFloat(document.getElementById('prodRating').value) || 4.0;
                 const imageColor = document.getElementById('prodImageColor').value.trim();
+                const imageData = document.getElementById('prodImageData').value;
 
                 if (!name) { showToast('⚠️ الرجاء إدخال اسم المنتج'); return; }
                 if (price <= 0) { showToast('⚠️ الرجاء إدخال سعر صحيح'); return; }
@@ -1333,6 +1504,7 @@
                     category,
                     rating: Math.min(5, Math.max(1, rating)),
                     imageColor: imageColor || '1a1a1a',
+                    imageData: imageData || '',
                 };
 
                 if (editId) {
@@ -1359,6 +1531,100 @@
             }
 
             document.getElementById('btnAddProduct').addEventListener('click', () => openProductModal(null));
+
+            // ============ IMPORT PRODUCTS JSON ============
+            document.getElementById('btnImportProductsJSON').addEventListener('click', () => {
+                if (!isLoggedIn) return;
+                document.getElementById('importProductsFile').value = '';
+                document.getElementById('importResult').className = 'import-result';
+                document.getElementById('importResult').style.display = 'none';
+                document.getElementById('importResult').textContent = '';
+                importModalOverlay.style.display = 'flex';
+            });
+
+            document.getElementById('importModalClose').addEventListener('click', () => {
+                importModalOverlay.style.display = 'none';
+            });
+            importModalOverlay.addEventListener('click', function(e) {
+                if (e.target === this) this.style.display = 'none';
+            });
+
+            document.getElementById('btnDoImportProducts').addEventListener('click', function() {
+                const fileInput = document.getElementById('importProductsFile');
+                const resultEl = document.getElementById('importResult');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    resultEl.className = 'import-result error';
+                    resultEl.textContent = '⚠️ الرجاء اختيار ملف JSON';
+                    resultEl.style.display = 'block';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        if (!Array.isArray(jsonData)) {
+                            throw new Error('الملف يجب أن يحتوي على مصفوفة منتجات');
+                        }
+                        if (jsonData.length === 0) {
+                            throw new Error('المصفوفة فارغة');
+                        }
+
+                        let imported = 0;
+                        let skipped = 0;
+                        const validCategories = ['ملابس', 'أحذية', 'إكسسوارات', 'عطور'];
+
+                        jsonData.forEach((item, idx) => {
+                            if (!item.name || !item.price) {
+                                skipped++;
+                                return;
+                            }
+                            if (typeof item.price !== 'number' || item.price <= 0) {
+                                skipped++;
+                                return;
+                            }
+
+                            const newProduct = {
+                                id: generateId(),
+                                name: String(item.name).trim(),
+                                description: String(item.description || '').trim(),
+                                price: Math.round(item.price),
+                                discount: Math.min(99, Math.max(0, parseInt(item.discount) || 0)),
+                                category: validCategories.includes(item.category) ? item.category :
+                                    'ملابس',
+                                rating: Math.min(5, Math.max(1, parseFloat(item.rating) || 4.0)),
+                                imageColor: String(item.imageColor || '1a1a1a').trim(),
+                                imageData: String(item.imageData || ''),
+                            };
+                            products.push(newProduct);
+                            imported++;
+                        });
+
+                        setData('products', products);
+                        renderProductsTable();
+                        renderStats();
+
+                        resultEl.className = 'import-result success';
+                        resultEl.textContent =
+                            `✅ تم استيراد ${imported} منتج بنجاح${skipped > 0 ? ` | ⚠️ تم تخطي ${skipped} منتج غير صالح` : ''}`;
+                        resultEl.style.display = 'block';
+                        fileInput.value = '';
+                        showToast(`✅ تم استيراد ${imported} منتج`);
+                    } catch (err) {
+                        resultEl.className = 'import-result error';
+                        resultEl.textContent = '⚠️ فشل الاستيراد: ' + err.message;
+                        resultEl.style.display = 'block';
+                    }
+                };
+                reader.onerror = function() {
+                    resultEl.className = 'import-result error';
+                    resultEl.textContent = '⚠️ فشل قراءة الملف';
+                    resultEl.style.display = 'block';
+                };
+                reader.readAsText(file);
+            });
 
             // Product search & sort
             document.getElementById('productSearch').addEventListener('input', function() {
@@ -1398,10 +1664,12 @@
                         sorted.sort((a, b) => a.id.localeCompare(b.id));
                         break;
                     case 'priceAsc':
-                        sorted.sort((a, b) => (a.price * (1 - a.discount / 100)) - (b.price * (1 - b.discount / 100)));
+                        sorted.sort((a, b) => (a.price * (1 - a.discount / 100)) - (b.price * (1 - b.discount /
+                            100)));
                         break;
                     case 'priceDesc':
-                        sorted.sort((a, b) => (b.price * (1 - b.discount / 100)) - (a.price * (1 - a.discount / 100)));
+                        sorted.sort((a, b) => (b.price * (1 - b.discount / 100)) - (a.price * (1 - a.discount /
+                            100)));
                         break;
                     case 'name':
                         sorted.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
@@ -1592,7 +1860,6 @@
                             if (backup.cart) setData('cart', backup.cart);
                             if (backup.appearance) setData('appearance', backup.appearance);
                             if (backup.adminPassword) setData('adminPassword', backup.adminPassword);
-                            // Reload state
                             products = getData('products', DEFAULT_PRODUCTS);
                             orders = getData('orders', []);
                             whatsappNumbers = getData('whatsapp', DEFAULT_WHATSAPP);
@@ -1616,10 +1883,8 @@
                         '⚠️ تحذير: سيتم حذف جميع البيانات وإعادتها إلى الإعدادات الافتراضية. هذا الإجراء لا يمكن التراجع عنه. هل أنت متأكد؟'
                         )) {
                     if (confirm('تأكيد نهائي: هل تريد حقاً إعادة ضبط المصنع؟')) {
-                        // Clear all styleStore keys
                         const keys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));
                         keys.forEach(k => localStorage.removeItem(k));
-                        // Reset defaults
                         products = [...DEFAULT_PRODUCTS];
                         orders = [];
                         whatsappNumbers = { ...DEFAULT_WHATSAPP };
@@ -1662,6 +1927,7 @@
                 if (e.key === 'Escape') {
                     closeProductModal();
                     closeWhatsappModal();
+                    importModalOverlay.style.display = 'none';
                 }
             });
 
@@ -1671,7 +1937,7 @@
             }
 
             // ============ CLOSE MODALS ON OVERLAY CLICK ============
-            [productModalOverlay, whatsappModalOverlay].forEach(overlay => {
+            [productModalOverlay, whatsappModalOverlay, importModalOverlay].forEach(overlay => {
                 overlay.addEventListener('click', function(e) {
                     if (e.target === this) this.style.display = 'none';
                 });
@@ -1680,6 +1946,8 @@
             console.log('🛡️ لوحة تحكم ستايل استور - جاهزة');
             console.log('📦 المنتجات:', products.length);
             console.log('📋 الطلبات:', orders.length);
+            console.log('📷 ميزة رفع الصور مفعلة');
+            console.log('📥 ميزة استيراد JSON للمنتجات مفعلة');
             console.log('🔑 كلمة المرور الافتراضية:', DEFAULT_PASSWORD);
         })();
     </script>
